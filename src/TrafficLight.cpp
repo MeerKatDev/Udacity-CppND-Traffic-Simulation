@@ -1,6 +1,7 @@
 #include <iostream>
 #include <random>
 #include <chrono>
+#include <future>
 #include "TrafficLight.h"
 
 /* Implementation of class "MessageQueue" */
@@ -56,6 +57,7 @@ void TrafficLight::simulate()
 using std::chrono::system_clock;
 using std::chrono::seconds;
 using std::chrono::milliseconds;
+using std::chrono::time_point;
 // virtual function which is executed in a thread
 void TrafficLight::cycleThroughPhases()
 {
@@ -66,7 +68,7 @@ void TrafficLight::cycleThroughPhases()
     // Also, the while-loop should use std::this_thread::sleep_for to wait 1ms between two cycles (5). 
     srand(time(NULL)); // seed 
     int cycleDuration = rand() % 6 + 4;
-    std::chrono::time_point<system_clock> lastUpdate;
+    time_point<system_clock> lastUpdate;
     long previousLastUpdate; 
 
     // initialize clock moment
@@ -86,7 +88,8 @@ void TrafficLight::cycleThroughPhases()
             _currentPhase = (_currentPhase != red) ? red : green;
 
             // (3) sends an update method
-            // TODO need the queue in FP.3 to implement this step
+            std::async(std::launch::async, 
+                &MessageQueue<TrafficLightPhase>::send, &_messagesQueue, std::move(_currentPhase)).wait();
 
             // reinit vars
             lastUpdate = system_clock::now();
