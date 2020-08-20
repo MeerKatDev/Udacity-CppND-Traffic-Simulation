@@ -9,10 +9,15 @@
 template <typename T>
 T MessageQueue<T>::receive()
 {
-    // FP.5a : The method receive should use std::unique_lock<std::mutex> and _condition.wait() 
-    // to wait for and receive new messages and pull them from the queue using move semantics. 
+    // FP.5a : The method receive should use std::unique_lock<std::mutex> 
+    std::unique_lock<std::mutex> locker(_mtx);
+    //and _condition.wait() to wait for and receive new messages 
+    _cond.wait(locker, [this] { return !_queue.empty(); });
+    // and pull them from the queue using move semantics. 
+    T msg = std::move(_queue.back());
+    _queue.pop_back();
     // The received object should then be returned by the receive function. 
-    return NULL;
+    return msg;
 }
 
 template <typename T>
