@@ -16,6 +16,7 @@ T MessageQueue<T>::receive()
     // and pull them from the queue using move semantics. 
     T msg = std::move(_queue.back());
     _queue.pop_back();
+
     // The received object should then be returned by the receive function. 
     return msg;
 }
@@ -33,6 +34,10 @@ void MessageQueue<T>::send(T &&msg)
 
 
 /* Implementation of class "TrafficLight" */
+using std::chrono::system_clock;
+using std::chrono::seconds;
+using std::chrono::milliseconds;
+using std::chrono::time_point;
 
 TrafficLight::TrafficLight()
 {
@@ -42,8 +47,17 @@ TrafficLight::TrafficLight()
 void TrafficLight::waitForGreen()
 {
     // FP.5b : add the implementation of the method waitForGreen, in which an infinite while-loop 
+    while(true) {
+        // As in cycleThroughPhases, sleep to reduce CPU load
+        std::this_thread::sleep_for(milliseconds(1));
+
+        auto currentPhase = _messagesQueue.receive();
     // runs and repeatedly calls the receive function on the message queue. 
+        if (currentPhase == TrafficLightPhase::green) {
     // Once it receives TrafficLightPhase::green, the method returns.
+            return;
+        }
+    }
 }
 
 TrafficLightPhase TrafficLight::getCurrentPhase()
@@ -59,10 +73,6 @@ void TrafficLight::simulate()
     threads.emplace_back(std::thread(&TrafficLight::cycleThroughPhases, this));
 }
 
-using std::chrono::system_clock;
-using std::chrono::seconds;
-using std::chrono::milliseconds;
-using std::chrono::time_point;
 // virtual function which is executed in a thread
 void TrafficLight::cycleThroughPhases()
 {
